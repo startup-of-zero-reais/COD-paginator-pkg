@@ -3,7 +3,6 @@ package paginator
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 	"reflect"
 	"strings"
@@ -24,7 +23,7 @@ func (p *pager) paginateSingle(item interface{}, paginated interface{}) error {
 				return err
 			}
 
-			for k, _ := range p.kv {
+			for k := range p.kv {
 				switch k {
 				case Self:
 					newSelf := fmt.Sprintf("%s?%s=%s", p.Config.BaseURL, p.kv[Key], p.kv[k])
@@ -45,7 +44,6 @@ func (p *pager) paginateCollection() error {
 	paginatedSlice := reflect.MakeSlice(reflect.SliceOf(p.items.Index(0).Type()), 0, p.items.Len())
 
 	for i := 0; i < p.items.Len(); i++ {
-		log.Printf("ITEM %+v", p.items.Index(i))
 		item := p.items.Index(i)
 
 		paginateEl := reflect.New(item.Type())
@@ -110,6 +108,10 @@ func (p *pager) scanMode() (Mode, error) {
 
 	itemsValueKind := p.items.Kind()
 	paginatedValueKind := p.paginated.Kind()
+
+	if itemsValueKind == reflect.Ptr {
+		return "", errors.New("o primeiro parâmetro de Paginate não pode ser um ponteiro")
+	}
 
 	if !validKinds(itemsValueKind, paginatedValueKind) {
 		return "", errors.New("os tipos de items e de paginated sao diferentes")
