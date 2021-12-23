@@ -2,9 +2,9 @@
 
 ### Primeiros passos
 
-- [Instalação](#-Instalação)
-- [Modo de uso](#-Modo-de-uso)
-- [Exemplo com Echo v4](#-Exemplo-com-Echo-v4)
+- [Instalação](#instalação)
+- [Modo de uso](#modo-de-uso)
+- [Exemplo com Echo v4](#exemplo-com-echo-v4)
 
 Pacote de paginação de dados
 
