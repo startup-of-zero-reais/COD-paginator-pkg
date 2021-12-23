@@ -1,99 +1,128 @@
 package paginator_test
 
 import (
-	"fmt"
 	paginator "github.com/startup-of-zero-reais/COD-paginator-pkg"
+	"github.com/startup-of-zero-reais/COD-paginator-pkg/mocks"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-/*
-	TAGS
-	key = chave que aparecera na query Ex.: key=value
-	_self = chave que recebera o metadado _self Ex.: http://baseURL.com/pagina?`key`=value
-	not_paginate = chave que define se o url tera a query de pagination Ex.: ?page=1&per_page=10
-*/
-
-type (
-	EntityModel struct {
-		Name   string `json:"name" paginator:"key:name"`
-		Self   string `json:"_link" paginator:"_self"`
-		Void   string `json:"-"`
-		Hidden string `json:"-" paginator:"-"`
-	}
-)
-
 func TestNewPaginator(t *testing.T) {
+	t.Run("should create an paginator", func(t *testing.T) {
+		config := &paginator.Config{
+			BaseURL:      "https://test.url.com",
+			ItemsPerPage: 10,
+		}
 
+		pager := paginator.NewPaginator(config)
+
+		require.NotNil(t, pager)
+	})
+	t.Run("should create an paginator with default items per page", func(t *testing.T) {
+		config := &paginator.Config{
+			BaseURL: "https://test.url.com",
+		}
+
+		pager := paginator.NewPaginator(config)
+
+		require.NotNil(t, pager)
+		require.Equal(t, uint32(10), config.ItemsPerPage)
+	})
 }
 
-func TestPaginate(t *testing.T) {
-	t.Run("should paginate single item", func(t *testing.T) {
-		input := EntityModel{
-			Name: "John",
-		}
-
-		output := &EntityModel{
-			Name:   "John",
-			Self:   "https://baseURL.com?name=John&page=1&per_page=10",
-			Void:   "",
-			Hidden: "",
-		}
-
-		pager := paginator.NewPaginator(&paginator.Config{
-			BaseURL:      "https://baseURL.com.br",
+func TestPager_WithMeta(t *testing.T) {
+	t.Run("should return an paginator with metadata", func(t *testing.T) {
+		config := &paginator.Config{
+			BaseURL:      "https://test.url.com",
 			ItemsPerPage: 10,
+		}
+
+		pager := paginator.NewPaginator(config)
+
+		p := pager.WithMeta(&paginator.Metadata{
+			Total:        20,
+			Page:         1,
+			ItemsPerPage: 15,
 		})
 
-		var result EntityModel
-		res := pager.Paginate(input, &result).Json()
-
-		fmt.Printf("\nOUTPUT: %+v\nRESULT: %+v\n\n", output, res)
+		require.NotNil(t, pager)
+		require.NotNil(t, p)
 	})
-
-	t.Run("should paginate slice of items", func(t *testing.T) {
-		inputs := []EntityModel{
-			{Name: "John doe"},
-			{Name: "Doe"},
-		}
-
-		outputs := []EntityModel{
-			{Name: "John doe", Self: "https://baseURL.com?key=John&page=1&per_page=10"},
-			{Name: "Doe", Self: "https://baseURL.com?key=Doe&page=1&per_page=10"},
-		}
-
-		pager := paginator.NewPaginator(&paginator.Config{
-			BaseURL:      "https://baseURL.com",
+	t.Run("should change items per_page on result", func(t *testing.T) {
+		config := &paginator.Config{
+			BaseURL:      "https://test.url.com",
 			ItemsPerPage: 10,
-		})
+		}
 
-		var results []EntityModel
-		result := pager.Paginate(inputs, &results).Json()
+		pager := paginator.NewPaginator(config)
 
-		fmt.Printf("\n\nOUTPUT: %+v\nRESULT: %+v\n\n", outputs, result)
+		var result []mocks.ItemMock
+		p, err := pager.WithMeta(&paginator.Metadata{
+			Total:        20,
+			Page:         1,
+			ItemsPerPage: 15,
+		}).Paginate(mocks.NewItemSlice(), &result)
+
+		require.Contains(t, p.Json(), "per_page=15")
+		require.Nil(t, err)
 	})
+}
 
-	t.Run("should show meta and links", func(t *testing.T) {
-		inputs := []EntityModel{
-			{Name: "John doe"},
-			{Name: "Doe"},
-		}
-
-		outputs := []EntityModel{
-			{Name: "John doe", Self: "https://baseURL.com?key=John&page=1&per_page=10"},
-			{Name: "Doe", Self: "https://baseURL.com?key=Doe&page=1&per_page=10"},
-		}
-
-		pager := paginator.NewPaginator(&paginator.Config{
-			BaseURL:      "https://baseURL.com",
+func TestPager_Paginate(t *testing.T) {
+	prePaginateTest := func() (*paginator.Config, []mocks.ItemMock) {
+		config := &paginator.Config{
+			BaseURL:      "https://test.url.com",
 			ItemsPerPage: 10,
-		})
+		}
+		var result []mocks.ItemMock
 
-		var results []EntityModel
-		result := pager.WithMeta(&paginator.Metadata{
-			Total: 20,
-			Page:  2,
-		}).Paginate(inputs, &results).Json()
+		return config, result
+	}
 
-		fmt.Printf("\n\nOUTPUT: %+v\nRESULT: %+v\n\n", outputs, result)
+	t.Run("should paginate items and return data result", func(t *testing.T) {
+		config := &paginator.Config{
+			BaseURL:      "https://test.url.com",
+			ItemsPerPage: 10,
+		}
+
+		pager := paginator.NewPaginator(config)
+
+		items := mocks.NewItemSlice()
+		var result []mocks.ItemMock
+		p, err := pager.Paginate(items, &result)
+
+		require.NotNil(t, p)
+		require.Nil(t, err)
+		require.Len(t, result, len(items))
+		require.Contains(t, p.Json(), "links")
+		require.Contains(t, p.Json(), "metadata")
+		require.Contains(t, p.Json(), "data")
+	})
+	t.Run("should insert self link, not metadata and links", func(t *testing.T) {
+		config := &paginator.Config{
+			BaseURL:      "https://test.url.com",
+			ItemsPerPage: 10,
+		}
+
+		pager := paginator.NewPaginator(config)
+
+		item := *mocks.NewItem()
+		var result mocks.ItemMock
+		p, err := pager.Paginate(item, &result)
+
+		require.Nil(t, err)
+		require.NotNil(t, p)
+		require.NotContains(t, p.Json(), "metadata")
+		require.NotContains(t, p.Json(), "links")
+	})
+	t.Run("should fatal if err", func(t *testing.T) {
+		c, result := prePaginateTest()
+		pager := paginator.NewPaginator(c)
+
+		var any interface{}
+		p, err := pager.Paginate(any, &result)
+
+		require.NotNil(t, err)
+		require.Nil(t, p)
 	})
 }
