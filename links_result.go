@@ -52,7 +52,7 @@ func (l *LinksResult) getKey() url.Values {
 		case Key:
 			switch value.(type) {
 			case string:
-				q.Add(key, value.(string))
+				q.Add(value.(string), l.CurrentQuery[Self].(string))
 			case bool:
 				q.Add(key, strconv.FormatBool(value.(bool)))
 			case int:
