@@ -142,10 +142,17 @@ func (p *pager) Paginate(items interface{}, paginated interface{}) (DataResultIn
 	}, nil
 }
 
+func (d *DataResult) Json() string {
 	buf := &bytes.Buffer{}
 	jsEncode := json.NewEncoder(buf)
 	jsEncode.SetEscapeHTML(false)
-	_ = jsEncode.Encode(dataResult)
 
+	isSlice := reflect.TypeOf(d.Data)
+
+	if isSlice.Kind() == reflect.Slice {
+		_ = jsEncode.Encode(d)
+	} else {
+		_ = jsEncode.Encode(d.Data)
+	}
 	return buf.String()
 }
