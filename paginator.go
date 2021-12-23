@@ -38,8 +38,7 @@ type (
 
 	Paginator interface {
 		WithMeta(metadata *Metadata) Paginator
-		Paginate(items interface{}, result interface{}) Paginator
-		Json() string
+		Paginate(items interface{}, result interface{}) (DataResultInterface, error)
 
 		paginateSingle(items interface{}, result interface{}) error
 		paginateCollection() error
@@ -107,39 +106,41 @@ func (p *pager) WithMeta(metadata *Metadata) Paginator {
 	return p
 }
 
-func (p *pager) Paginate(items interface{}, paginated interface{}) Paginator {
+func (p *pager) Paginate(items interface{}, paginated interface{}) (DataResultInterface, error) {
 	p.items = reflect.ValueOf(items)
 	p.paginated = reflect.ValueOf(paginated)
 	mode, err := p.scanMode()
 
 	if err != nil {
-		log.Fatalf(err.Error())
+		return nil, err
 	}
+
+	metadata := NewMetaResult(p.Metadata)
 
 	if mode == Collection {
 		err = p.paginateCollection()
 		if err != nil {
-			log.Fatalf(err.Error())
+			return nil, err
 		}
-		return p
+
+		return &DataResult{
+			Data:     p.paginated.Elem().Interface(),
+			Metadata: metadata,
+			Links:    NewLinksResult(metadata, p.kv),
+		}, nil
 	}
 
 	err = p.paginateSingle(items, paginated)
 	if err != nil {
-		log.Fatalf(err.Error())
+		return nil, err
 	}
 
-	return p
-}
-
-func (p *pager) Json() string {
-	metadata := NewMetaResult(p.Metadata)
-
-	dataResult := &DataResult{
+	return &DataResult{
 		Data:     p.paginated.Elem().Interface(),
 		Metadata: metadata,
 		Links:    NewLinksResult(metadata, p.kv),
-	}
+	}, nil
+}
 
 	buf := &bytes.Buffer{}
 	jsEncode := json.NewEncoder(buf)
