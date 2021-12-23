@@ -25,9 +25,14 @@ type (
 	}
 
 	Metadata struct {
-		config *Config
-		Total  uint
-		Page   uint
+		config       *Config
+		Total        uint
+		Page         uint
+		ItemsPerPage uint32
+	}
+
+	DataResultInterface interface {
+		Json() string
 	}
 
 	DataResult struct {
@@ -43,6 +48,7 @@ type (
 		paginateSingle(items interface{}, result interface{}) error
 		paginateCollection() error
 		extractTags(tag string, field reflect.Value) error
+		scanMode() (Mode, error)
 	}
 
 	Config struct {
@@ -72,7 +78,6 @@ const (
 	Key         = "key"
 	Self        = "_self"
 	NonPaginate = "non_paginate"
-	Empty       = "-"
 )
 
 func NewPaginator(config *Config) Paginator {
@@ -100,6 +105,10 @@ func NewPaginator(config *Config) Paginator {
 func (p *pager) WithMeta(metadata *Metadata) Paginator {
 	if metadata.config == nil {
 		metadata.config = p.Config
+	}
+
+	if metadata.ItemsPerPage > 0 {
+		metadata.config.ItemsPerPage = metadata.ItemsPerPage
 	}
 
 	p.Metadata = metadata
