@@ -2,7 +2,6 @@ package paginator
 
 import (
 	"fmt"
-	"log"
 	"net/url"
 	"strconv"
 )
@@ -31,7 +30,7 @@ type (
 	}
 )
 
-func NewLinksResult(metadata *MetaResult, query map[string]interface{}) LinksInterface {
+func NewLinksResult(metadata *MetaResult, query map[string]interface{}) *LinksResult {
 	links := &LinksResult{
 		MetaResult:   metadata,
 		CurrentQuery: query,
@@ -88,8 +87,6 @@ func (l *LinksResult) MakeLastPage() {
 		Page:    l.MetaResult.PageTotal,
 		PerPage: uint(l.config.ItemsPerPage),
 	}
-
-	log.Println("PAGE TOTAL", l.PageTotal)
 
 	if l.PageTotal <= 1 {
 		l.LastPage = ""
