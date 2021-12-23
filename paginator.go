@@ -3,12 +3,26 @@ package paginator
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"log"
 	"reflect"
 )
 
 type (
 	Mode string
+
+	Logger interface {
+		SetOutput(w io.Writer)
+		Printf(format string, v ...interface{})
+		Print(v ...interface{})
+		Println(v ...interface{})
+		Fatal(v ...interface{})
+		Fatalf(format string, v ...interface{})
+		Fatalln(v ...interface{})
+		Panic(v ...interface{})
+		Panicf(format string, v ...interface{})
+		Panicln(v ...interface{})
+	}
 
 	Metadata struct {
 		config *Config
@@ -33,6 +47,7 @@ type (
 	}
 
 	Config struct {
+		*log.Logger
 		BaseURL      string
 		ItemsPerPage uint32
 	}
@@ -40,6 +55,7 @@ type (
 	pager struct {
 		*Config
 		*Metadata
+		*log.Logger
 
 		items     reflect.Value
 		paginated reflect.Value
@@ -65,8 +81,13 @@ func NewPaginator(config *Config) Paginator {
 		config.ItemsPerPage = 10
 	}
 
+	if config.Logger == nil {
+		config.Logger = log.Default()
+	}
+
 	return &pager{
 		Config: config,
+		Logger: config.Logger,
 		kv: map[string]interface{}{
 			Key:         "id",
 			NonPaginate: false,
