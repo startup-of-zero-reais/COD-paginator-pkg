@@ -18,6 +18,10 @@ func (p *pager) paginateSingle(item interface{}, paginated interface{}) error {
 			it := iValue.Field(i)
 			paginatedField.Set(it)
 
+			if paginator == "-" || it.IsZero() {
+				paginatedField.Set(reflect.Zero(it.Type()))
+			}
+
 			err := p.extractTags(paginator, it)
 			if err != nil {
 				return err
@@ -32,8 +36,22 @@ func (p *pager) paginateSingle(item interface{}, paginated interface{}) error {
 					if strings.Index(paginator, Self) >= 0 {
 						paginatedField.Set(newSelfValue)
 					}
+				case Embedded:
+					newEmbedded := fmt.Sprintf("%s?%s=%s",
+						p.Config.BaseURL,
+						p.kv[SecondaryKey],
+						p.kv[k])
+
+					newEmbeddedValue := reflect.ValueOf(newEmbedded)
+					if strings.Index(paginator, Embedded) >= 0 {
+						paginatedField.Set(newEmbeddedValue)
+					}
 				}
 			}
+		} else {
+			paginatedField := pValue.Field(i)
+			it := iValue.Field(i)
+			paginatedField.Set(it)
 		}
 	}
 
@@ -81,6 +99,9 @@ func (p *pager) extractTags(tag string, f reflect.Value) error {
 			p.kv[Self] = url.QueryEscape(f.Interface().(string))
 		case NonPaginate:
 			p.kv[tagKey] = true
+		case SecondaryKey:
+			p.kv[tagKey] = tagValue
+			p.kv[Embedded] = url.QueryEscape(f.Interface().(string))
 		}
 	}
 
