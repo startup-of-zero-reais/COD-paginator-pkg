@@ -2,18 +2,21 @@ package mocks
 
 type (
 	ItemMock struct {
-		ID      string `json:"id,omitempty" paginator:"key:id"`
-		Name    string `json:"name,omitempty"`
-		Link    string `json:"link,omitempty" paginator:"_self"`
-		Ignored string `json:"ignored,omitempty" paginator:"-"`
+		ID        string `json:"id,omitempty" paginator:"key:id"`
+		SubItemID string `json:"sub_item_id" paginator:"skey:sub-item"`
+		Name      string `json:"name,omitempty"`
+		Link      string `json:"link,omitempty" paginator:"_self"`
+		Embedded  string `json:"embedded,omitempty" paginator:"_embedded"`
+		Ignored   string `json:"ignored,omitempty" paginator:"-"`
 	}
 )
 
 func NewItem(overrideArgs ...map[string]string) *ItemMock {
 	itemMock := &ItemMock{
-		ID:      "31f6bb14-d876-4e20-b1a6-bc873de55c8f",
-		Name:    "John doe",
-		Ignored: "Ignored",
+		ID:        "31f6bb14-d876-4e20-b1a6-bc873de55c8f",
+		SubItemID: "sub-item-uuid",
+		Name:      "John doe",
+		Ignored:   "Ignored",
 	}
 
 	if len(overrideArgs) > 0 {
@@ -21,6 +24,8 @@ func NewItem(overrideArgs ...map[string]string) *ItemMock {
 			switch key {
 			case "id":
 				itemMock.ID = value
+			case "sub_item_id":
+				itemMock.SubItemID = value
 			case "name":
 				itemMock.Name = value
 			case "ignored":
