@@ -75,9 +75,11 @@ const (
 )
 
 const (
-	Key         = "key"
-	Self        = "_self"
-	NonPaginate = "non_paginate"
+	Key          = "key"
+	SecondaryKey = "skey"
+	Embedded     = "_embedded"
+	Self         = "_self"
+	NonPaginate  = "non_paginate"
 )
 
 func NewPaginator(config *Config) Paginator {
