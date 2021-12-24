@@ -22,10 +22,12 @@ go get -u github.com/startup-of-zero-reais/COD-paginator-pkg
 package main
 
 type EntityModel struct {
-	ID     string `json:"id" paginator:"key:id"`
-	Self   string `json:"_link" paginator:"_self"`
-	Void   string `json:"-"`
-	Hidden string `json:"-" paginator:"-"`
+	ID       string `json:"id" paginator:"key:id"`
+	RelatID  string `json:"relation_id" paginator:"skey:relation-id"`
+	Self     string `json:"_link" paginator:"_self"`
+	Embedded string `json:"_embedded" paginator:"_embedded"`
+	Void     string `json:"-"`
+	Hidden   string `json:"-" paginator:"-"`
 }
 ```
 
@@ -74,10 +76,12 @@ log.Println(jsonResult)
 //       {
 //         "id": "31f6bb14-d876-4e20-b1a6-bc873de55c8f",
 //         "_link": "https://baseURL.com.br?id=31f6bb14-d876-4e20-b1a6-bc873de55c8f"
+//         "_embedded": "https://baseURL.com.br?relation-id=31f6bb14-d876-4e20-b1a6-bc873de55c8f"
 //       },
 //       {
 //         "id": "41f6bb14-d876-4e20-b1a6-bc873de55c80",
 //         "_link": "https://baseURL.com.br?id=41f6bb14-d876-4e20-b1a6-bc873de55c80"
+//         "_embedded": "https://baseURL.com.br?relation-id=41f6bb14-d876-4e20-b1a6-bc873de55c80"
 //       }
 //     ],
 //     "metadata": {
@@ -134,7 +138,7 @@ func main() {
 
 		var paginated []Users
 		result, err := pager.WithMeta(&paginator.Metadata{
-			Total:        totalOfUsers,
+			Total:        uint(totalOfUsers),
 			Page:         page,
 			ItemsPerPage: uint32(perPage),
 		}).Paginate(users, &paginated)
