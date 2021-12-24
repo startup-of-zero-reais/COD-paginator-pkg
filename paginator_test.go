@@ -114,6 +114,8 @@ func TestPager_Paginate(t *testing.T) {
 		require.NotNil(t, p)
 		require.NotContains(t, p.Json(), "metadata")
 		require.NotContains(t, p.Json(), "links")
+		require.Contains(t, p.Json(), "link")
+		require.Contains(t, p.Json(), "embedded")
 	})
 	t.Run("should fatal if err", func(t *testing.T) {
 		c, result := prePaginateTest()
